@@ -777,6 +777,157 @@
     z-index: 1;
 }
 
+#live2d-widget {
+    z-index: 4 !important;
+}
+
+#live2d-widget canvas {
+    filter: drop-shadow(0 18px 30px rgba(236, 72, 153, 0.14));
+}
+
+#live2d-widget .live2d-widget-dialog-container {
+    right: 12px !important;
+    bottom: 70% !important;
+    width: 310px !important;
+    height: 96px !important;
+}
+
+#live2d-widget .live2d-widget-dialog {
+    display: flex !important;
+    align-items: center !important;
+    color: #9f1239 !important;
+    border: 1px solid rgba(244, 114, 182, 0.36) !important;
+    border-radius: 16px !important;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 241, 248, 0.86)) !important;
+    box-shadow:
+        0 18px 38px rgba(190, 24, 93, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+    font-size: 1.45rem !important;
+    font-weight: 700 !important;
+    line-height: 1.55 !important;
+    transform: none !important;
+    animation: none !important;
+}
+
+#waifu-toolbar {
+    position: fixed;
+    right: 300px;
+    bottom: 86px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.waifu-toolbar__button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid rgba(244, 114, 182, 0.22);
+    border-radius: 999px;
+    color: rgba(236, 72, 153, 0.72);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 241, 248, 0.74)),
+        rgba(255, 255, 255, 0.62);
+    box-shadow:
+        0 10px 24px rgba(190, 24, 93, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.76);
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+.waifu-toolbar__button svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
+}
+
+.waifu-toolbar__button::after {
+    content: attr(data-waifu-label);
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 9px);
+    max-width: 120px;
+    padding: 6px 9px;
+    border: 1px solid rgba(244, 114, 182, 0.22);
+    border-radius: 999px;
+    color: #9f1239;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 12px 28px rgba(190, 24, 93, 0.12);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(5px, -50%);
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+.waifu-toolbar__button:hover,
+.waifu-toolbar__button:focus-visible {
+    color: #db2777;
+    border-color: rgba(236, 72, 153, 0.36);
+    box-shadow:
+        0 14px 30px rgba(190, 24, 93, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    transform: translateX(-2px);
+}
+
+.waifu-toolbar__button:hover::after,
+.waifu-toolbar__button:focus-visible::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+
+.waifu-toolbar__button:focus-visible {
+    outline: 2px solid rgba(236, 72, 153, 0.42);
+    outline-offset: 3px;
+}
+
+[data-scheme="dark"] #live2d-widget .live2d-widget-dialog {
+    color: #fce7f3 !important;
+    border-color: rgba(244, 114, 182, 0.3) !important;
+    background:
+        linear-gradient(145deg, rgba(76, 29, 58, 0.82), rgba(36, 24, 38, 0.82)) !important;
+    box-shadow:
+        0 18px 38px rgba(0, 0, 0, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-scheme="dark"] .waifu-toolbar__button {
+    color: rgba(251, 182, 206, 0.84);
+    border-color: rgba(244, 114, 182, 0.2);
+    background:
+        linear-gradient(145deg, rgba(76, 29, 58, 0.72), rgba(36, 24, 38, 0.66)),
+        rgba(18, 24, 38, 0.48);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-scheme="dark"] .waifu-toolbar__button::after {
+    color: #fce7f3;
+    border-color: rgba(244, 114, 182, 0.22);
+    background: rgba(36, 24, 38, 0.88);
+}
+
 @media (min-width: 1024px) and (max-width: 1279px) {
     .container.extended {
         --left-sidebar-max-width: 18%;
@@ -793,7 +944,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #site-particles {
+    #site-particles,
+    #live2d-widget,
+    #waifu-toolbar {
+        display: none;
+    }
+}
+
+@media (max-width: 960px) {
+    #live2d-widget,
+    #waifu-toolbar {
         display: none;
     }
 }

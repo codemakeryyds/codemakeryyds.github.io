@@ -1,4 +1,157 @@
 <canvas id="site-particles" aria-hidden="true"></canvas>
+<input type="hidden" id="live_talk" value="0">
+<script src="/live2d/vendor/L2Dwidget.min.js"></script>
+<script>
+(() => {
+    if (
+        window.matchMedia("(max-width: 960px)").matches ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        typeof window.L2Dwidget === "undefined"
+    ) return;
+
+    const waifuMessages = [
+        "该学习了，芝士雪豹。",
+        "今天也要把笔记整理好。",
+        "别光看我，文章也看看。",
+        "鼠标放错地方了？",
+        "都结束了，又开始了。",
+        "欢迎，路行者。"
+    ];
+    let waifuDialogTimer = 0;
+
+    function waifuSay(text, duration = 4200) {
+        const dialog = document.querySelector("#live2d-widget .live2d-widget-dialog");
+        if (!dialog) return;
+
+        dialog.textContent = text;
+        dialog.style.opacity = "1";
+        window.clearTimeout(waifuDialogTimer);
+        waifuDialogTimer = window.setTimeout(() => {
+            dialog.style.opacity = "0";
+        }, duration);
+    }
+
+    function randomMessage() {
+        const index = Math.floor(Math.random() * waifuMessages.length);
+        waifuSay(waifuMessages[index]);
+    }
+
+    function downloadFrame() {
+        try {
+            if (typeof window.L2Dwidget.downloadFrame === "function") {
+                window.L2Dwidget.downloadFrame();
+                waifuSay("截图保存好了。");
+                return;
+            }
+        } catch (error) {
+            console.warn("Live2D screenshot failed:", error);
+        }
+
+        waifuSay("截图功能暂时不可用。");
+    }
+
+    function hideWaifu() {
+        waifuSay("我先下班了，刷新页面还能回来。", 900);
+        window.setTimeout(() => {
+            const widget = document.getElementById("live2d-widget");
+            const toolbar = document.getElementById("waifu-toolbar");
+            if (widget) widget.style.display = "none";
+            if (toolbar) toolbar.style.display = "none";
+        }, 900);
+    }
+
+    function icon(name) {
+        const icons = {
+            home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
+            message: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>',
+            camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
+            info: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>',
+            close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12"/></svg>'
+        };
+
+        return icons[name];
+    }
+
+    function createToolbarButton(label, iconName, action) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "waifu-toolbar__button";
+        button.dataset.waifuLabel = label;
+        button.setAttribute("aria-label", label);
+        button.innerHTML = icon(iconName);
+        button.addEventListener("mousedown", (event) => event.stopPropagation());
+        button.addEventListener("mouseup", (event) => event.stopPropagation());
+        button.addEventListener("touchstart", (event) => event.stopPropagation(), { passive: true });
+        button.addEventListener("touchend", (event) => event.stopPropagation());
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            action(event);
+        });
+        return button;
+    }
+
+    function setupWaifuToolbar() {
+        if (document.getElementById("waifu-toolbar")) return;
+
+        const toolbar = document.createElement("nav");
+        toolbar.id = "waifu-toolbar";
+        toolbar.setAttribute("aria-label", "看板娘工具栏");
+        toolbar.append(
+            createToolbarButton("回到首页", "home", () => {
+                window.location.href = "/";
+            }),
+            createToolbarButton("随机台词", "message", randomMessage),
+            createToolbarButton("截图", "camera", downloadFrame),
+            createToolbarButton("关于本站", "info", () => {
+                waifuSay("这里是理塘丁真的个人技术博客。");
+            }),
+            createToolbarButton("隐藏看板娘", "close", hideWaifu)
+        );
+
+        document.body.appendChild(toolbar);
+    }
+
+    window.L2Dwidget.on("create-container", () => {
+        window.setTimeout(setupWaifuToolbar, 120);
+    });
+
+    window.L2Dwidget.on("create-dialog", () => {
+        window.setTimeout(() => waifuSay("都结束了，又开始了。", 3000), 350);
+    });
+
+    window.L2Dwidget.init({
+        model: {
+            jsonPath: "/live2d/kp31/normal/model.json",
+            scale: 1
+        },
+        display: {
+            position: "right",
+            width: 270,
+            height: 410,
+            hOffset: 18,
+            vOffset: -18
+        },
+        mobile: {
+            show: false
+        },
+        react: {
+            opacityDefault: 0.9,
+            opacityOnHover: 1
+        },
+        dialog: {
+            enable: true,
+            script: {
+                "every idle 12s": "该学习了，芝士雪豹",
+                "hover .article-list": "别光看我，文章也看看。",
+                "hover .menu": "要去哪里逛逛？",
+                "tap body": "该学习了，芝士雪豹",
+                "tap face": "鼠标放这里，是要找我吗？"
+            }
+        }
+    });
+})();
+</script>
 <script>
 (() => {
     const canvas = document.getElementById("site-particles");
@@ -28,16 +181,16 @@
 
         return {
             mobile,
-            minCount: mobile ? 20 : 36,
-            maxCount: mobile ? 44 : 90,
-            density: mobile ? 26000 : 18000,
-            baseSpeed: mobile ? 0.34 : 0.55,
+            minCount: mobile ? 42 : 86,
+            maxCount: mobile ? 74 : 170,
+            density: mobile ? 8500 : 9000,
+            baseSpeed: mobile ? 0.32 : 0.48,
             wanderMin: mobile ? 0.002 : 0.003,
-            wanderMax: mobile ? 0.005 : 0.01,
-            pointerRange: mobile ? 130 : 190,
-            pointerForce: mobile ? 0.052 : 0.085,
-            pointerLineDistance: mobile ? 124 : 170,
-            linkDistance: mobile ? 86 : 116,
+            wanderMax: mobile ? 0.0045 : 0.008,
+            pointerRange: mobile ? 160 : 230,
+            pointerForce: mobile ? 0.045 : 0.07,
+            pointerLineDistance: mobile ? 150 : 210,
+            linkDistance: mobile ? 108 : 145,
             explosionRadius: mobile ? 240 : 360,
             explosionForce: mobile ? 5.8 : 9.5,
             maxSpeed: mobile ? 2.55 : 3.8,
@@ -55,17 +208,17 @@
     function palette() {
         if (scheme() === "dark") {
             return {
-                dot: "rgba(251, 182, 206, 0.72)",
-                link: "rgba(251, 182, 206, 0.18)",
-                pointer: "rgba(244, 114, 182, 0.58)",
+                dot: "rgba(251, 182, 206, 0.64)",
+                link: "rgba(251, 182, 206, 0.13)",
+                pointer: "rgba(244, 114, 182, 0.46)",
                 ring: "rgba(244, 114, 182, 0.5)"
             };
         }
 
         return {
-            dot: "rgba(180, 84, 132, 0.5)",
-            link: "rgba(236, 72, 153, 0.14)",
-            pointer: "rgba(236, 72, 153, 0.48)",
+            dot: "rgba(180, 84, 132, 0.46)",
+            link: "rgba(236, 72, 153, 0.105)",
+            pointer: "rgba(236, 72, 153, 0.4)",
             ring: "rgba(244, 114, 182, 0.38)"
         };
     }
@@ -201,9 +354,9 @@
                 const dy = a.y - pointer.y;
                 const pointerDistance = Math.hypot(dx, dy);
                 if (pointerDistance < options.pointerLineDistance) {
-                    ctx.globalAlpha = Math.pow(1 - pointerDistance / options.pointerLineDistance, 1.3) * (options.mobile ? 0.72 : 1);
+                    ctx.globalAlpha = Math.pow(1 - pointerDistance / options.pointerLineDistance, 1.3) * (options.mobile ? 0.58 : 0.82);
                     ctx.strokeStyle = colors.pointer;
-                    ctx.lineWidth = options.mobile ? 0.9 : 1.2;
+                    ctx.lineWidth = options.mobile ? 0.8 : 1;
                     ctx.beginPath();
                     ctx.moveTo(pointer.x, pointer.y);
                     ctx.lineTo(a.x, a.y);
@@ -219,9 +372,9 @@
                 const distance = Math.hypot(dx, dy);
                 if (distance > options.linkDistance) continue;
 
-                ctx.globalAlpha = (1 - distance / options.linkDistance) * (options.mobile ? 0.45 : 0.75);
+                ctx.globalAlpha = (1 - distance / options.linkDistance) * (options.mobile ? 0.34 : 0.54);
                 ctx.strokeStyle = colors.link;
-                ctx.lineWidth = 1;
+                ctx.lineWidth = options.mobile ? 0.8 : 0.9;
                 ctx.beginPath();
                 ctx.moveTo(a.x, a.y);
                 ctx.lineTo(b.x, b.y);
