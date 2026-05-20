@@ -958,11 +958,26 @@
 
     #live2d-widget {
         z-index: 3 !important;
+        right: 40px !important;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 44px) !important;
+        width: 270px !important;
+        height: 410px !important;
+    }
+
+    #live2d-widget canvas {
+        right: 0 !important;
+        bottom: 0 !important;
+        left: auto !important;
+        top: auto !important;
+        width: 270px !important;
+        height: 410px !important;
+        transform: scale(0.64);
+        transform-origin: right bottom;
     }
 
     #live2d-widget .live2d-widget-dialog-container {
-        right: 0 !important;
-        bottom: 74% !important;
+        right: 10px !important;
+        bottom: 53% !important;
         width: 190px !important;
         height: 62px !important;
         padding: 6px !important;
