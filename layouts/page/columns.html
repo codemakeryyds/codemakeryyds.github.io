@@ -1,0 +1,5 @@
+{{ define "main" }}
+    {{ partial "home/feed-tabs" . }}
+    {{ partial "article/article.html" . }}
+    {{ partialCached "footer/footer" . }}
+{{ end }}

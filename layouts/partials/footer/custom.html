@@ -1,0 +1,392 @@
+<canvas id="site-particles" aria-hidden="true"></canvas>
+<script>
+(() => {
+    const canvas = document.getElementById("site-particles");
+    if (
+        !canvas ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        window.matchMedia("(max-width: 767px)").matches
+    ) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const pointer = { x: 0, y: 0, active: false };
+    let width = 0;
+    let height = 0;
+    let particles = [];
+    let ripples = [];
+    let frame = 0;
+    let collisionHeat = 0;
+
+    function scheme() {
+        return document.documentElement.dataset.scheme === "dark" ? "dark" : "light";
+    }
+
+    function palette() {
+        if (scheme() === "dark") {
+            return {
+                dot: "rgba(251, 182, 206, 0.72)",
+                link: "rgba(251, 182, 206, 0.18)",
+                pointer: "rgba(244, 114, 182, 0.58)",
+                ring: "rgba(244, 114, 182, 0.5)"
+            };
+        }
+
+        return {
+            dot: "rgba(180, 84, 132, 0.5)",
+            link: "rgba(236, 72, 153, 0.14)",
+            pointer: "rgba(236, 72, 153, 0.48)",
+            ring: "rgba(244, 114, 182, 0.38)"
+        };
+    }
+
+    function clampSpeed(p, max) {
+        const speed = Math.hypot(p.vx, p.vy);
+        if (speed <= max) return;
+
+        p.vx = (p.vx / speed) * max;
+        p.vy = (p.vy / speed) * max;
+    }
+
+    function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const count = Math.min(90, Math.max(36, Math.floor((width * height) / 18000)));
+        particles = Array.from({ length: count }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.55,
+            vy: (Math.random() - 0.5) * 0.55,
+            r: 1 + Math.random() * 1.5,
+            wander: 0.003 + Math.random() * 0.007
+        }));
+    }
+
+    function explode(x, y) {
+        ripples.push({ x, y, radius: 0, life: 1 });
+        collisionHeat = 1;
+
+        for (const p of particles) {
+            const dx = p.x - x;
+            const dy = p.y - y;
+            const distance = Math.max(Math.hypot(dx, dy), 1);
+            if (distance > 360) continue;
+
+            const force = Math.pow(1 - distance / 360, 1.4) * 9.5 + 0.7;
+            p.vx += (dx / distance) * force;
+            p.vy += (dy / distance) * force;
+        }
+    }
+
+    function updateParticles() {
+        for (const p of particles) {
+            p.vx += (Math.random() - 0.5) * p.wander;
+            p.vy += (Math.random() - 0.5) * p.wander;
+
+            if (pointer.active) {
+                const dx = pointer.x - p.x;
+                const dy = pointer.y - p.y;
+                const distance = Math.max(Math.hypot(dx, dy), 1);
+
+                if (distance < 190) {
+                    const attraction = Math.pow(1 - distance / 190, 1.8) * 0.085;
+                    p.vx += (dx / distance) * attraction;
+                    p.vy += (dy / distance) * attraction;
+                }
+            }
+
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vx *= 0.985 - collisionHeat * 0.02;
+            p.vy *= 0.985 - collisionHeat * 0.02;
+
+            if (Math.abs(p.vx) < 0.04) p.vx += (Math.random() - 0.5) * 0.03;
+            if (Math.abs(p.vy) < 0.04) p.vy += (Math.random() - 0.5) * 0.03;
+            clampSpeed(p, 3.8);
+
+            if (p.x < 0 || p.x > width) {
+                p.vx *= -0.86;
+                p.x = Math.max(0, Math.min(width, p.x));
+            }
+            if (p.y < 0 || p.y > height) {
+                p.vy *= -0.86;
+                p.y = Math.max(0, Math.min(height, p.y));
+            }
+        }
+    }
+
+    function resolveCollisions() {
+        const minDistance = 15;
+        const push = 0.32 + collisionHeat * 1.1;
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const a = particles[i];
+                const b = particles[j];
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+                const distance = Math.max(Math.hypot(dx, dy), 0.01);
+                if (distance > minDistance) continue;
+
+                const nx = dx / distance;
+                const ny = dy / distance;
+                const overlap = (minDistance - distance) * push;
+                a.x -= nx * overlap * 0.5;
+                a.y -= ny * overlap * 0.5;
+                b.x += nx * overlap * 0.5;
+                b.y += ny * overlap * 0.5;
+
+                const relativeVelocity = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+                if (relativeVelocity < 0) {
+                    const impulse = relativeVelocity * -0.72;
+                    a.vx -= nx * impulse;
+                    a.vy -= ny * impulse;
+                    b.vx += nx * impulse;
+                    b.vy += ny * impulse;
+                }
+            }
+        }
+    }
+
+    function drawLinks(colors) {
+        for (let i = 0; i < particles.length; i++) {
+            const a = particles[i];
+
+            if (pointer.active) {
+                const dx = a.x - pointer.x;
+                const dy = a.y - pointer.y;
+                const pointerDistance = Math.hypot(dx, dy);
+                if (pointerDistance < 170) {
+                    ctx.globalAlpha = Math.pow(1 - pointerDistance / 170, 1.3);
+                    ctx.strokeStyle = colors.pointer;
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(pointer.x, pointer.y);
+                    ctx.lineTo(a.x, a.y);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const b = particles[j];
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance > 116) continue;
+
+                ctx.globalAlpha = (1 - distance / 116) * 0.75;
+                ctx.strokeStyle = colors.link;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+    }
+
+    function drawRipples(colors) {
+        ripples = ripples.filter((ripple) => {
+            ripple.radius += 8 + collisionHeat * 3;
+            ripple.life -= 0.025;
+
+            ctx.globalAlpha = Math.max(ripple.life, 0) * 0.8;
+            ctx.strokeStyle = colors.ring;
+            ctx.lineWidth = 1.4 + ripple.life * 1.4;
+            ctx.beginPath();
+            ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            return ripple.life > 0;
+        });
+    }
+
+    function drawDots(colors) {
+        for (const p of particles) {
+            ctx.beginPath();
+            ctx.fillStyle = colors.dot;
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function draw() {
+        frame = requestAnimationFrame(draw);
+        ctx.clearRect(0, 0, width, height);
+        const colors = palette();
+
+        updateParticles();
+        resolveCollisions();
+        drawLinks(colors);
+        drawRipples(colors);
+        drawDots(colors);
+
+        collisionHeat *= 0.95;
+    }
+
+    window.addEventListener("resize", resize, { passive: true });
+    window.addEventListener("pointermove", (event) => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        pointer.active = true;
+    }, { passive: true });
+    window.addEventListener("pointerdown", (event) => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        pointer.active = true;
+        explode(event.clientX, event.clientY);
+    }, { passive: true });
+    window.addEventListener("pointerleave", () => {
+        pointer.active = false;
+    }, { passive: true });
+    window.addEventListener("beforeunload", () => cancelAnimationFrame(frame));
+
+    resize();
+    draw();
+})();
+</script>
+<script>
+(() => {
+    const links = document.querySelectorAll(".sidebar-social-icons a[href^='http']");
+
+    links.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            if (
+                event.defaultPrevented ||
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+            ) return;
+
+            event.preventDefault();
+
+            const opened = window.open(link.href, "_blank");
+            if (opened) {
+                opened.opener = null;
+                return;
+            }
+
+            window.location.assign(link.href);
+        });
+    });
+})();
+</script>
+<script>
+(() => {
+    const form = document.querySelector(".sidebar-search-form");
+    const input = form?.querySelector("input");
+    const results = document.querySelector(".sidebar-search-results");
+    const jsonURL = form?.dataset.json;
+
+    if (!form || !input || !results || !jsonURL) return;
+
+    let pages = null;
+    let controller = null;
+
+    function normalize(text) {
+        return String(text || "").toLowerCase().trim();
+    }
+
+    function escapeHTML(text) {
+        return String(text || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll("\"", "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    async function loadPages() {
+        if (pages) return pages;
+
+        pages = await fetch(jsonURL, { signal: controller?.signal }).then((response) => response.json());
+        return pages;
+    }
+
+    function render(items, keyword) {
+        if (!keyword) {
+            results.hidden = true;
+            results.innerHTML = "";
+            return;
+        }
+
+        results.hidden = false;
+
+        if (items.length === 0) {
+            results.innerHTML = `<p class="sidebar-search-empty">没有找到相关内容</p>`;
+            return;
+        }
+
+        results.innerHTML = items.slice(0, 6).map((item) => `
+            <a class="sidebar-search-result" href="${item.permalink}">
+                <strong>${escapeHTML(item.title)}</strong>
+                <span>${escapeHTML(String(item.content || "").replace(/\s+/g, " ").slice(0, 54))}</span>
+            </a>
+        `).join("");
+    }
+
+    async function search() {
+        const keyword = normalize(input.value);
+        if (!keyword) {
+            render([], "");
+            return;
+        }
+
+        controller?.abort();
+        controller = new AbortController();
+
+        try {
+            const data = await loadPages();
+            const words = keyword.split(/\s+/).filter(Boolean);
+            const matches = data
+                .map((page) => {
+                    const title = normalize(page.title);
+                    const content = normalize(page.content);
+                    const score = words.reduce((sum, word) => {
+                        if (title.includes(word)) return sum + 3;
+                        if (content.includes(word)) return sum + 1;
+                        return sum;
+                    }, 0);
+                    return { ...page, score };
+                })
+                .filter((page) => page.score > 0)
+                .sort((a, b) => b.score - a.score);
+
+            render(matches, keyword);
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                results.hidden = false;
+                results.innerHTML = `<p class="sidebar-search-empty">搜索暂时不可用</p>`;
+            }
+        }
+    }
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const firstResult = results.querySelector("a");
+        if (firstResult) firstResult.click();
+    });
+
+    input.addEventListener("input", search);
+    input.addEventListener("focus", search);
+
+    document.addEventListener("click", (event) => {
+        if (!form.contains(event.target) && !results.contains(event.target)) {
+            results.hidden = true;
+        }
+    });
+})();
+</script>

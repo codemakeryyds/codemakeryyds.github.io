@@ -1,0 +1,77 @@
+# Configure main menu and social menu.
+
+[[main]]
+    identifier = "home"
+    name       = "主页"
+    url        = "/"
+    weight     = 1
+
+    [main.params]
+        icon = "home"
+
+[[main]]
+    identifier = "about"
+    name       = "关于"
+    url        = "/about/"
+    weight     = 2
+
+    [main.params]
+        icon = "user"
+
+[[main]]
+    identifier = "archives"
+    name       = "归档"
+    url        = "/archives/"
+    weight     = 3
+
+    [main.params]
+        icon = "archives"
+
+[[main]]
+    identifier = "links"
+    name       = "友链"
+    url        = "/links/"
+    weight     = 4
+
+    [main.params]
+        icon = "link"
+
+[[social]]
+    identifier = "github"
+    name       = "GitHub"
+    url        = "https://github.com/codemakeryyds"
+    weight     = 1
+
+    [social.params]
+        icon = "brand-github"
+        newTab = true
+
+[[social]]
+    identifier = "bilibili"
+    name       = "B 站"
+    url        = "https://space.bilibili.com/662853588"
+    weight     = 2
+
+    [social.params]
+        icon = "brand-bilibili"
+        newTab = true
+
+[[social]]
+    identifier = "qq-email"
+    name       = "QQ 邮箱"
+    url        = "https://mail.qq.com/"
+    weight     = 3
+
+    [social.params]
+        icon = "mail"
+        newTab = true
+
+[[social]]
+    identifier = "zhihu"
+    name       = "知乎"
+    url        = "https://www.zhihu.com/people/bbnm-38-61"
+    weight     = 4
+
+    [social.params]
+        icon = "brand-zhihu"
+        newTab = true

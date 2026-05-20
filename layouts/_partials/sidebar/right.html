@@ -1,0 +1,70 @@
+{{- $scope := default "homepage" .Scope -}}
+{{- $context := .Context -}}
+{{- $isZh := eq $context.Site.Language.Lang "zh" -}}
+
+{{- if and $context.IsHome (eq $scope "homepage") -}}
+    <aside class="sidebar right-sidebar sticky site-aside">
+        <section class="side-card side-card--intro">
+            <span class="side-card__label">{{ if $isZh }}关于本站{{ else }}About this site{{ end }}</span>
+            <h2>{{ if $isZh }}理塘丁真的技术博客{{ else }}Litang Dingzhen's Blog{{ end }}</h2>
+            <p>
+                {{ if $isZh }}
+                    记录学习、建站、项目实践和一些值得长期保存的想法。
+                {{ else }}
+                    Notes on learning, site building, projects, and ideas worth keeping.
+                {{ end }}
+            </p>
+        </section>
+
+        <section class="side-card">
+            <div class="side-card__heading">
+                {{ partial "helper/icon" "link" }}
+                <h2>{{ if $isZh }}项目{{ else }}Projects{{ end }}</h2>
+            </div>
+            <div class="side-link-list">
+                <a href="https://github.com/codemakeryyds/codemakeryyds.github.io" target="_blank" rel="noreferrer">
+                    <strong>{{ if $isZh }}个人博客源码{{ else }}Blog source{{ end }}</strong>
+                    <span>{{ if $isZh }}Hugo + GitHub Pages 自动部署{{ else }}Hugo and GitHub Pages deployment{{ end }}</span>
+                </a>
+                <a href="{{ relLangURL "post/hello/" }}">
+                    <strong>{{ if $isZh }}建站记录{{ else }}Site build log{{ end }}</strong>
+                    <span>{{ if $isZh }}第一篇文章和发布流程记录{{ else }}First post and publishing workflow{{ end }}</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="side-card">
+            <div class="side-card__heading">
+                {{ partial "helper/icon" "hash" }}
+                <h2>{{ if $isZh }}博客专栏{{ else }}Columns{{ end }}</h2>
+            </div>
+            <div class="side-link-list">
+                <a href="{{ relLangURL "columns/" }}">
+                    <strong>{{ if $isZh }}专栏总览{{ else }}Column index{{ end }}</strong>
+                    <span>{{ if $isZh }}按主题整理长期内容{{ else }}Topic-based writing series{{ end }}</span>
+                </a>
+                <a href="{{ relLangURL "tags/hugo/" }}">
+                    <strong>Hugo</strong>
+                    <span>{{ if $isZh }}主题配置和静态站点实践{{ else }}Theme setup and static site notes{{ end }}</span>
+                </a>
+                <a href="{{ relLangURL "tags/github-pages/" }}">
+                    <strong>GitHub Pages</strong>
+                    <span>{{ if $isZh }}部署、域名和自动化发布{{ else }}Deployment, domains, and publishing{{ end }}</span>
+                </a>
+            </div>
+        </section>
+    </aside>
+{{- else -}}
+    {{- with (index $context.Site.Params.widgets $scope) -}}
+        <aside class="sidebar right-sidebar sticky">
+            {{ range $widget := . }}
+                {{ if templates.Exists (printf "_partials/widget/%s.html" .type) }}
+                    {{- $params := default dict .params -}}
+                    {{ partial (printf "widget/%s" .type) (dict "Context" $context "Params" $params) }}
+                {{ else }}
+                    {{ warnf "Widget %s not found" .type }}
+                {{ end }}
+            {{ end }}
+        </aside>
+    {{ end }}
+{{- end -}}

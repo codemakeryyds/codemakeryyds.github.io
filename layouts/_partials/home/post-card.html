@@ -1,0 +1,45 @@
+{{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Context" .) -}}
+<article class="home-post-card{{ if $image }} has-cover{{ end }}">
+    {{ if $image }}
+        <a class="home-post-card__cover" href="{{ .RelPermalink }}" aria-label="{{ .Title }}">
+            {{ partial "helper/responsive-image" (dict
+                "Resource" $image.Resource
+                "Widths" (cond .Site.Params.ImageProcessing.Content.Enabled .Site.Params.ImageProcessing.Content.Widths nil)
+                "Attributes" (dict
+                    "src" $image.Permalink
+                    "width" $image.Width
+                    "height" $image.Height
+                    "alt" .Title
+                    "loading" "lazy"
+                    "sizes" "(max-width: 767px) calc(100vw - 30px), (max-width: 1279px) 760px, 820px"
+                )
+            ) }}
+        </a>
+    {{ end }}
+
+    <div class="home-post-card__body">
+        <h2 class="home-post-card__title">
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        </h2>
+
+        {{ with .Params.description }}
+            <p class="home-post-card__summary">{{ . }}</p>
+        {{ end }}
+
+        <footer class="home-post-card__meta">
+            {{ if not .Date.IsZero }}
+                <span>
+                    {{ partial "helper/icon" "date" }}
+                    <time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">{{ .Date.Format "2006-01-02" }}</time>
+                </span>
+            {{ end }}
+
+            {{ range first 1 (.GetTerms "categories") }}
+                <a class="home-post-card__term" href="{{ .RelPermalink }}">
+                    {{ partial "helper/icon" "categories" }}
+                    {{ .LinkTitle }}
+                </a>
+            {{ end }}
+        </footer>
+    </div>
+</article>

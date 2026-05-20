@@ -1,0 +1,18 @@
+{{ define "main" }}
+    {{- $paginator := partial "helper/paginator.html" . -}}
+
+    {{ partial "home/feed-tabs" . }}
+
+    <section class="home-card-feed">
+        {{ range $index, $element := $paginator.Pages }}
+            {{ partial "home/post-card" . }}
+        {{ end }}
+    </section>
+
+    {{- partial "pagination.html" . -}}
+    {{- partial "footer/footer" . -}}
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}

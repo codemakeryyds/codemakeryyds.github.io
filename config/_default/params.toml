@@ -1,0 +1,68 @@
+# Pages placed under these sections will be shown on homepage and archive page.
+mainSections = ["post"]
+# Output page's full content in RSS.
+rssFullContent = true
+favicon        = "/img/avatar.jpg"
+
+# Accepted values: "default", "lastmod"
+# default = see https://gohugo.io/quick-reference/glossary/#default-sort-order
+# lastmod = sort by last modified date, in descending order
+SortBy              = "default"
+
+[footer]
+    since      = 2026
+    customText = "有时间就要学习，芝士雪豹"
+
+[dateFormat]
+    published   = ":date_full"
+    lastUpdated = ":date_full"
+
+[sidebar]
+    emoji    = ""
+    subtitle = "有时间就要学习，芝士雪豹"
+    avatar   = "/img/avatar.jpg"
+
+[article]
+    headingAnchor = false
+    math          = false
+    readingTime   = true
+
+    [article.license]
+        enabled = true
+        default = "本文采用 CC BY-NC-SA 4.0 协议授权"
+
+[widgets]
+    homepage = [
+        { type = "categories", params = { limit = 10 } },
+        { type = "tag-cloud", params = { limit = 10 } },
+    ]
+    page = [{ type = "toc" }]
+
+[opengraph.twitter]
+    site = ""
+    card = "summary_large_image"
+
+[colorScheme]
+    toggle  = true
+    default = "auto"
+
+## Comments
+[comments]
+    enabled  = false
+    provider = "giscus"
+
+    # Enable comments after turning on GitHub Discussions and filling repoID/categoryID from https://giscus.app/.
+    [comments.giscus]
+        repo             = "codemakeryyds/codemakeryyds.github.io"
+        repoID           = ""
+        category         = "Announcements"
+        categoryID       = ""
+        mapping          = "pathname"
+        lightTheme       = "light"
+        darkTheme        = "dark_dimmed"
+        reactionsEnabled = 1
+        emitMetadata     = 0
+        inputPosition    = "top"
+        lang             = "zh-CN"
+        strict           = 0
+        loading          = "lazy"

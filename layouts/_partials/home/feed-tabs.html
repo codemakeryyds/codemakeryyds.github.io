@@ -1,0 +1,17 @@
+{{- $isZh := eq .Site.Language.Lang "zh" -}}
+{{- $categoriesURL := relLangURL "categories/" -}}
+{{- $tagsURL := relLangURL "tags/" -}}
+{{- $columnsURL := relLangURL "columns/" -}}
+{{- $archivesURL := relLangURL "archives/" -}}
+{{- $isCategories := hasPrefix .RelPermalink $categoriesURL -}}
+{{- $isTags := hasPrefix .RelPermalink $tagsURL -}}
+{{- $isColumns := hasPrefix .RelPermalink $columnsURL -}}
+{{- $isArchives := hasPrefix .RelPermalink $archivesURL -}}
+
+<nav class="home-feed-tabs" aria-label="{{ if $isZh }}首页频道{{ else }}Home sections{{ end }}">
+    <a class="{{ if .IsHome }}is-active{{ end }}" href="{{ .Site.Home.RelPermalink }}">{{ if $isZh }}近期发布{{ else }}Recent{{ end }}</a>
+    <a class="{{ if $isCategories }}is-active{{ end }}" href="{{ $categoriesURL }}">{{ if $isZh }}分类{{ else }}Categories{{ end }}</a>
+    <a class="{{ if $isTags }}is-active{{ end }}" href="{{ $tagsURL }}">{{ if $isZh }}标签{{ else }}Tags{{ end }}</a>
+    <a class="{{ if $isColumns }}is-active{{ end }}" href="{{ $columnsURL }}">{{ if $isZh }}专栏{{ else }}Columns{{ end }}</a>
+    <a class="{{ if $isArchives }}is-active{{ end }}" href="{{ $archivesURL }}">{{ if $isZh }}归档{{ else }}Archives{{ end }}</a>
+</nav>

@@ -1,0 +1,11 @@
+baseurl = "https://www.ccyun.cloud/"
+locale  = "zh-cn"
+title   = "理塘丁真"
+theme   = "hugo-theme-stack"
+
+defaultContentLanguage = "zh"
+hasCJKLanguage         = true
+timeZone               = "Asia/Hong_Kong"
+
+[pagination]
+    pagerSize = 5
