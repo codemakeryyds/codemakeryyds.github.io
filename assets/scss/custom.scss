@@ -792,13 +792,17 @@
     }
 }
 
-@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
     #site-particles {
         display: none;
     }
 }
 
 @media (max-width: 767px) {
+    #site-particles {
+        opacity: 0.72;
+    }
+
     .home-feed-tabs {
         position: relative;
         top: auto;

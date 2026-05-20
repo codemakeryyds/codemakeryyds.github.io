@@ -4,8 +4,7 @@
     const canvas = document.getElementById("site-particles");
     if (
         !canvas ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-        window.matchMedia("(max-width: 767px)").matches
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) return;
 
     const ctx = canvas.getContext("2d");
@@ -18,6 +17,36 @@
     let ripples = [];
     let frame = 0;
     let collisionHeat = 0;
+
+    function mobileMode() {
+        return window.matchMedia("(max-width: 767px)").matches ||
+            window.matchMedia("(pointer: coarse)").matches;
+    }
+
+    function motionSettings() {
+        const mobile = mobileMode();
+
+        return {
+            mobile,
+            minCount: mobile ? 20 : 36,
+            maxCount: mobile ? 44 : 90,
+            density: mobile ? 26000 : 18000,
+            baseSpeed: mobile ? 0.34 : 0.55,
+            wanderMin: mobile ? 0.002 : 0.003,
+            wanderMax: mobile ? 0.005 : 0.01,
+            pointerRange: mobile ? 130 : 190,
+            pointerForce: mobile ? 0.052 : 0.085,
+            pointerLineDistance: mobile ? 124 : 170,
+            linkDistance: mobile ? 86 : 116,
+            explosionRadius: mobile ? 240 : 360,
+            explosionForce: mobile ? 5.8 : 9.5,
+            maxSpeed: mobile ? 2.55 : 3.8,
+            minCollisionDistance: mobile ? 12 : 15,
+            collisionPush: mobile ? 0.22 : 0.32,
+            rippleStep: mobile ? 5.5 : 8,
+            rippleHeatStep: mobile ? 1.6 : 3
+        };
+    }
 
     function scheme() {
         return document.documentElement.dataset.scheme === "dark" ? "dark" : "light";
@@ -59,18 +88,20 @@
         canvas.style.height = `${height}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        const count = Math.min(90, Math.max(36, Math.floor((width * height) / 18000)));
+        const options = motionSettings();
+        const count = Math.min(options.maxCount, Math.max(options.minCount, Math.floor((width * height) / options.density)));
         particles = Array.from({ length: count }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 0.55,
-            vy: (Math.random() - 0.5) * 0.55,
-            r: 1 + Math.random() * 1.5,
-            wander: 0.003 + Math.random() * 0.007
+            vx: (Math.random() - 0.5) * options.baseSpeed,
+            vy: (Math.random() - 0.5) * options.baseSpeed,
+            r: 0.9 + Math.random() * (options.mobile ? 1.1 : 1.5),
+            wander: options.wanderMin + Math.random() * (options.wanderMax - options.wanderMin)
         }));
     }
 
     function explode(x, y) {
+        const options = motionSettings();
         ripples.push({ x, y, radius: 0, life: 1 });
         collisionHeat = 1;
 
@@ -78,15 +109,17 @@
             const dx = p.x - x;
             const dy = p.y - y;
             const distance = Math.max(Math.hypot(dx, dy), 1);
-            if (distance > 360) continue;
+            if (distance > options.explosionRadius) continue;
 
-            const force = Math.pow(1 - distance / 360, 1.4) * 9.5 + 0.7;
+            const force = Math.pow(1 - distance / options.explosionRadius, 1.4) * options.explosionForce + 0.45;
             p.vx += (dx / distance) * force;
             p.vy += (dy / distance) * force;
         }
     }
 
     function updateParticles() {
+        const options = motionSettings();
+
         for (const p of particles) {
             p.vx += (Math.random() - 0.5) * p.wander;
             p.vy += (Math.random() - 0.5) * p.wander;
@@ -96,8 +129,8 @@
                 const dy = pointer.y - p.y;
                 const distance = Math.max(Math.hypot(dx, dy), 1);
 
-                if (distance < 190) {
-                    const attraction = Math.pow(1 - distance / 190, 1.8) * 0.085;
+                if (distance < options.pointerRange) {
+                    const attraction = Math.pow(1 - distance / options.pointerRange, 1.8) * options.pointerForce;
                     p.vx += (dx / distance) * attraction;
                     p.vy += (dy / distance) * attraction;
                 }
@@ -110,7 +143,7 @@
 
             if (Math.abs(p.vx) < 0.04) p.vx += (Math.random() - 0.5) * 0.03;
             if (Math.abs(p.vy) < 0.04) p.vy += (Math.random() - 0.5) * 0.03;
-            clampSpeed(p, 3.8);
+            clampSpeed(p, options.maxSpeed);
 
             if (p.x < 0 || p.x > width) {
                 p.vx *= -0.86;
@@ -124,8 +157,9 @@
     }
 
     function resolveCollisions() {
-        const minDistance = 15;
-        const push = 0.32 + collisionHeat * 1.1;
+        const options = motionSettings();
+        const minDistance = options.minCollisionDistance;
+        const push = options.collisionPush + collisionHeat * (options.mobile ? 0.72 : 1.1);
 
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
@@ -157,6 +191,8 @@
     }
 
     function drawLinks(colors) {
+        const options = motionSettings();
+
         for (let i = 0; i < particles.length; i++) {
             const a = particles[i];
 
@@ -164,10 +200,10 @@
                 const dx = a.x - pointer.x;
                 const dy = a.y - pointer.y;
                 const pointerDistance = Math.hypot(dx, dy);
-                if (pointerDistance < 170) {
-                    ctx.globalAlpha = Math.pow(1 - pointerDistance / 170, 1.3);
+                if (pointerDistance < options.pointerLineDistance) {
+                    ctx.globalAlpha = Math.pow(1 - pointerDistance / options.pointerLineDistance, 1.3) * (options.mobile ? 0.72 : 1);
                     ctx.strokeStyle = colors.pointer;
-                    ctx.lineWidth = 1.2;
+                    ctx.lineWidth = options.mobile ? 0.9 : 1.2;
                     ctx.beginPath();
                     ctx.moveTo(pointer.x, pointer.y);
                     ctx.lineTo(a.x, a.y);
@@ -181,9 +217,9 @@
                 const dx = b.x - a.x;
                 const dy = b.y - a.y;
                 const distance = Math.hypot(dx, dy);
-                if (distance > 116) continue;
+                if (distance > options.linkDistance) continue;
 
-                ctx.globalAlpha = (1 - distance / 116) * 0.75;
+                ctx.globalAlpha = (1 - distance / options.linkDistance) * (options.mobile ? 0.45 : 0.75);
                 ctx.strokeStyle = colors.link;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -196,8 +232,10 @@
     }
 
     function drawRipples(colors) {
+        const options = motionSettings();
+
         ripples = ripples.filter((ripple) => {
-            ripple.radius += 8 + collisionHeat * 3;
+            ripple.radius += options.rippleStep + collisionHeat * options.rippleHeatStep;
             ripple.life -= 0.025;
 
             ctx.globalAlpha = Math.max(ripple.life, 0) * 0.8;
