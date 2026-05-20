@@ -952,9 +952,28 @@
 }
 
 @media (max-width: 960px) {
-    #live2d-widget,
     #waifu-toolbar {
         display: none;
+    }
+
+    #live2d-widget {
+        z-index: 3 !important;
+    }
+
+    #live2d-widget .live2d-widget-dialog-container {
+        right: 0 !important;
+        bottom: 74% !important;
+        width: 190px !important;
+        height: 62px !important;
+        padding: 6px !important;
+    }
+
+    #live2d-widget .live2d-widget-dialog {
+        min-height: 52px !important;
+        padding: 8px 10px !important;
+        border-radius: 12px !important;
+        font-size: 1.12rem !important;
+        line-height: 1.45 !important;
     }
 }
 

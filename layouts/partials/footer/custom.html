@@ -4,11 +4,11 @@
 <script>
 (() => {
     if (
-        window.matchMedia("(max-width: 960px)").matches ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
         typeof window.L2Dwidget === "undefined"
     ) return;
 
+    const compactWaifu = window.matchMedia("(max-width: 960px)").matches;
     const waifuMessages = [
         "该学习了，芝士雪豹。",
         "今天也要把笔记整理好。",
@@ -92,6 +92,7 @@
     }
 
     function setupWaifuToolbar() {
+        if (compactWaifu) return;
         if (document.getElementById("waifu-toolbar")) return;
 
         const toolbar = document.createElement("nav");
@@ -127,13 +128,14 @@
         },
         display: {
             position: "right",
-            width: 270,
-            height: 410,
-            hOffset: 18,
-            vOffset: -18
+            width: compactWaifu ? 158 : 270,
+            height: compactWaifu ? 242 : 410,
+            hOffset: compactWaifu ? 6 : 18,
+            vOffset: compactWaifu ? -8 : -18
         },
         mobile: {
-            show: false
+            show: true,
+            scale: 0.72
         },
         react: {
             opacityDefault: 0.9,
