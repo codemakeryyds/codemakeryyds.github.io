@@ -19,10 +19,48 @@
     ];
     let waifuDialogTimer = 0;
     const waifuPositionKey = "ccyun-live2d-position";
+    const waifuHiddenKey = "ccyun-live2d-hidden";
     const waifuDefaultPosition = {
         right: compactWaifu ? 40 : 18,
         bottom: compactWaifu ? 44 : -18
     };
+
+    function isWaifuHidden() {
+        try {
+            return localStorage.getItem(waifuHiddenKey) === "true";
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function setWaifuHidden(hidden) {
+        try {
+            if (hidden) {
+                localStorage.setItem(waifuHiddenKey, "true");
+            } else {
+                localStorage.removeItem(waifuHiddenKey);
+            }
+        } catch (error) {
+            console.warn("Live2D hidden state could not be saved:", error);
+        }
+    }
+
+    function createWaifuRestoreButton() {
+        if (document.getElementById("waifu-restore")) return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = "waifu-restore";
+        button.setAttribute("aria-label", "召回看板娘");
+        button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c4.2 0 7 2.6 7 6.2 0 4.8-4.4 8.2-7 11.8-2.6-3.6-7-7-7-11.8C5 5.6 7.8 3 12 3Z"/><path d="M9 9h.01M15 9h.01M9 13c1.7 1.2 4.3 1.2 6 0"/></svg>';
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setWaifuHidden(false);
+            window.location.reload();
+        });
+        document.body.appendChild(button);
+    }
 
     function waifuSay(text, duration = 4200) {
         const dialog = document.querySelector("#live2d-widget .live2d-widget-dialog");
@@ -56,12 +94,14 @@
     }
 
     function hideWaifu() {
-        waifuSay("我先下班了，刷新页面还能回来。", 900);
+        setWaifuHidden(true);
+        waifuSay("我先下班了，点右下角小按钮还能回来。", 900);
         window.setTimeout(() => {
             const widget = document.getElementById("live2d-widget");
             const toolbar = document.getElementById("waifu-toolbar");
             if (widget) widget.style.display = "none";
             if (toolbar) toolbar.style.display = "none";
+            createWaifuRestoreButton();
         }, 900);
     }
 
@@ -284,6 +324,11 @@
             syncWaifuToolbar(widget);
         }, 160);
     });
+
+    if (isWaifuHidden()) {
+        createWaifuRestoreButton();
+        return;
+    }
 
     window.L2Dwidget.on("create-dialog", () => {
         window.setTimeout(() => waifuSay("都结束了，又开始了。", 3000), 350);

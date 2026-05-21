@@ -938,6 +938,58 @@
     background: rgba(36, 24, 38, 0.88);
 }
 
+#waifu-restore {
+    position: fixed;
+    right: 18px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid rgba(236, 72, 153, 0.24);
+    border-radius: 999px;
+    color: #db2777;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 241, 248, 0.78)),
+        rgba(255, 255, 255, 0.68);
+    box-shadow:
+        0 14px 32px rgba(190, 24, 93, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+}
+
+#waifu-restore svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+#waifu-restore:hover,
+#waifu-restore:focus-visible {
+    color: #be185d;
+    border-color: rgba(236, 72, 153, 0.38);
+    transform: translateY(-1px);
+}
+
+[data-scheme="dark"] #waifu-restore {
+    color: #f9a8d4;
+    border-color: rgba(244, 114, 182, 0.24);
+    background:
+        linear-gradient(145deg, rgba(76, 29, 58, 0.78), rgba(36, 24, 38, 0.7)),
+        rgba(18, 24, 38, 0.5);
+    box-shadow:
+        0 14px 32px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 @media (min-width: 1024px) and (max-width: 1279px) {
     .container.extended {
         --left-sidebar-max-width: 18%;
@@ -956,7 +1008,8 @@
 @media (prefers-reduced-motion: reduce) {
     #site-particles,
     #live2d-widget,
-    #waifu-toolbar {
+    #waifu-toolbar,
+    #waifu-restore {
         display: none;
     }
 }
