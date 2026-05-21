@@ -18,6 +18,11 @@
         "欢迎，路行者。"
     ];
     let waifuDialogTimer = 0;
+    const waifuPositionKey = "ccyun-live2d-position";
+    const waifuDefaultPosition = {
+        right: compactWaifu ? 40 : 18,
+        bottom: compactWaifu ? 44 : -18
+    };
 
     function waifuSay(text, duration = 4200) {
         const dialog = document.querySelector("#live2d-widget .live2d-widget-dialog");
@@ -60,12 +65,169 @@
         }, 900);
     }
 
+    function clampWaifuPosition(widget, left, top) {
+        const rect = widget.getBoundingClientRect();
+        const margin = compactWaifu ? 8 : 14;
+        const maxLeft = window.innerWidth - rect.width - margin;
+        const maxTop = window.innerHeight - rect.height - margin;
+
+        return {
+            left: Math.min(Math.max(left, margin), Math.max(maxLeft, margin)),
+            top: Math.min(Math.max(top, margin), Math.max(maxTop, margin))
+        };
+    }
+
+    function syncWaifuToolbar(widget) {
+        const toolbar = document.getElementById("waifu-toolbar");
+        if (!toolbar || compactWaifu) return;
+
+        if (!widget.classList.contains("is-waifu-positioned")) {
+            toolbar.style.removeProperty("left");
+            toolbar.style.removeProperty("right");
+            toolbar.style.removeProperty("top");
+            toolbar.style.removeProperty("bottom");
+            return;
+        }
+
+        const rect = widget.getBoundingClientRect();
+        const toolbarRect = toolbar.getBoundingClientRect();
+        const left = Math.max(12, rect.left - toolbarRect.width - 10);
+        const top = Math.min(
+            window.innerHeight - toolbarRect.height - 12,
+            Math.max(12, rect.top + rect.height * 0.48 - toolbarRect.height * 0.5)
+        );
+
+        toolbar.style.left = `${left}px`;
+        toolbar.style.top = `${top}px`;
+        toolbar.style.right = "auto";
+        toolbar.style.bottom = "auto";
+    }
+
+    function setWaifuPosition(widget, left, top, persist) {
+        const position = clampWaifuPosition(widget, left, top);
+        widget.classList.add("is-waifu-positioned");
+        widget.style.setProperty("left", `${position.left}px`, "important");
+        widget.style.setProperty("top", `${position.top}px`, "important");
+        widget.style.setProperty("right", "auto", "important");
+        widget.style.setProperty("bottom", "auto", "important");
+
+        if (persist) {
+            try {
+                localStorage.setItem(waifuPositionKey, JSON.stringify(position));
+            } catch (error) {
+                console.warn("Live2D position could not be saved:", error);
+            }
+        }
+
+        syncWaifuToolbar(widget);
+    }
+
+    function applySavedWaifuPosition(widget) {
+        try {
+            const saved = JSON.parse(localStorage.getItem(waifuPositionKey) || "null");
+            if (!saved || !Number.isFinite(saved.left) || !Number.isFinite(saved.top)) return;
+            setWaifuPosition(widget, saved.left, saved.top, false);
+        } catch (error) {
+            localStorage.removeItem(waifuPositionKey);
+        }
+    }
+
+    function resetWaifuPosition() {
+        const widget = document.getElementById("live2d-widget");
+        if (!widget) return;
+
+        try {
+            localStorage.removeItem(waifuPositionKey);
+        } catch (error) {
+            console.warn("Live2D position could not be reset:", error);
+        }
+        widget.classList.remove("is-waifu-positioned");
+        widget.style.removeProperty("left");
+        widget.style.removeProperty("top");
+        widget.style.setProperty("right", `${waifuDefaultPosition.right}px`, "important");
+        widget.style.setProperty("bottom", `${waifuDefaultPosition.bottom}px`, "important");
+        syncWaifuToolbar(widget);
+        waifuSay("位置复位了。");
+    }
+
+    function setupWaifuDrag(widget) {
+        if (widget.dataset.dragReady === "true") return;
+        widget.dataset.dragReady = "true";
+
+        const drag = {
+            active: false,
+            moved: false,
+            pointerId: null,
+            offsetX: 0,
+            offsetY: 0,
+            suppressClickUntil: 0
+        };
+
+        widget.addEventListener("pointerdown", (event) => {
+            if (event.button !== undefined && event.button !== 0) return;
+
+            const rect = widget.getBoundingClientRect();
+            drag.active = true;
+            drag.moved = false;
+            drag.pointerId = event.pointerId;
+            drag.offsetX = event.clientX - rect.left;
+            drag.offsetY = event.clientY - rect.top;
+            widget.classList.add("is-waifu-dragging");
+            widget.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        widget.addEventListener("pointermove", (event) => {
+            if (!drag.active || event.pointerId !== drag.pointerId) return;
+
+            const left = event.clientX - drag.offsetX;
+            const top = event.clientY - drag.offsetY;
+            const movedEnough = Math.abs(left - widget.getBoundingClientRect().left) > 2 ||
+                Math.abs(top - widget.getBoundingClientRect().top) > 2;
+            drag.moved = drag.moved || movedEnough;
+            setWaifuPosition(widget, left, top, false);
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        function finishDrag(event) {
+            if (!drag.active || event.pointerId !== drag.pointerId) return;
+
+            drag.active = false;
+            widget.classList.remove("is-waifu-dragging");
+            widget.releasePointerCapture?.(event.pointerId);
+            if (drag.moved) {
+                const rect = widget.getBoundingClientRect();
+                setWaifuPosition(widget, rect.left, rect.top, true);
+                drag.suppressClickUntil = Date.now() + 450;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        widget.addEventListener("pointerup", finishDrag);
+        widget.addEventListener("pointercancel", finishDrag);
+        widget.addEventListener("click", (event) => {
+            if (Date.now() > drag.suppressClickUntil) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }, true);
+
+        window.addEventListener("resize", () => {
+            if (!widget.classList.contains("is-waifu-positioned")) return;
+            const rect = widget.getBoundingClientRect();
+            setWaifuPosition(widget, rect.left, rect.top, true);
+        }, { passive: true });
+    }
+
     function icon(name) {
         const icons = {
             home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
             message: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg>',
             camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
             info: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>',
+            reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>',
             close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12"/></svg>'
         };
 
@@ -107,14 +269,20 @@
             createToolbarButton("关于本站", "info", () => {
                 waifuSay("这里是理塘丁真的个人技术博客。");
             }),
+            createToolbarButton("复位位置", "reset", resetWaifuPosition),
             createToolbarButton("隐藏看板娘", "close", hideWaifu)
         );
 
         document.body.appendChild(toolbar);
     }
 
-    window.L2Dwidget.on("create-container", () => {
-        window.setTimeout(setupWaifuToolbar, 120);
+    window.L2Dwidget.on("create-container", (widget) => {
+        window.setTimeout(() => {
+            setupWaifuDrag(widget);
+            applySavedWaifuPosition(widget);
+            setupWaifuToolbar();
+            syncWaifuToolbar(widget);
+        }, 160);
     });
 
     window.L2Dwidget.on("create-dialog", () => {
