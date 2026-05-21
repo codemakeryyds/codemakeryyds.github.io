@@ -186,20 +186,20 @@
             minCount: mobile ? 120 : 260,
             maxCount: mobile ? 220 : 520,
             density: mobile ? 2800 : 3600,
-            baseSpeed: mobile ? 0.72 : 0.95,
-            wanderMin: mobile ? 0.006 : 0.008,
-            wanderMax: mobile ? 0.018 : 0.026,
-            flowForce: mobile ? 0.018 : 0.026,
-            windX: mobile ? 0.018 : 0.024,
-            windY: mobile ? 0.006 : 0.011,
-            damping: mobile ? 0.992 : 0.994,
+            baseSpeed: mobile ? 0.42 : 0.58,
+            wanderMin: mobile ? 0.0035 : 0.0045,
+            wanderMax: mobile ? 0.011 : 0.016,
+            flowForce: mobile ? 0.009 : 0.013,
+            windX: mobile ? 0.008 : 0.011,
+            windY: mobile ? 0.003 : 0.005,
+            damping: mobile ? 0.986 : 0.988,
             pointerRange: mobile ? 210 : 290,
             pointerForce: mobile ? 0.065 : 0.095,
             pointerLineDistance: mobile ? 190 : 260,
             linkDistance: mobile ? 128 : 168,
             explosionRadius: mobile ? 300 : 430,
-            explosionForce: mobile ? 7.2 : 11.8,
-            maxSpeed: mobile ? 3.8 : 5.2,
+            explosionForce: mobile ? 6.2 : 9.2,
+            maxSpeed: mobile ? 2.2 : 3,
             minCollisionDistance: mobile ? 11 : 13,
             collisionPush: mobile ? 0.26 : 0.38,
             rippleStep: mobile ? 7 : 10,
@@ -214,20 +214,20 @@
     function palette() {
         if (scheme() === "dark") {
             return {
-                dot: "rgba(251, 182, 206, 0.78)",
-                link: "rgba(251, 182, 206, 0.22)",
-                pointer: "rgba(244, 114, 182, 0.68)",
-                ring: "rgba(244, 114, 182, 0.68)",
-                glow: "rgba(244, 114, 182, 0.34)"
+                dot: "rgba(251, 182, 206, 0.72)",
+                link: "rgba(251, 182, 206, 0.18)",
+                pointer: "rgba(244, 114, 182, 0.56)",
+                ring: "rgba(244, 114, 182, 0.56)",
+                glow: "rgba(244, 114, 182, 0.24)"
             };
         }
 
         return {
-            dot: "rgba(180, 84, 132, 0.62)",
-            link: "rgba(236, 72, 153, 0.18)",
-            pointer: "rgba(236, 72, 153, 0.56)",
-            ring: "rgba(244, 114, 182, 0.52)",
-            glow: "rgba(236, 72, 153, 0.22)"
+            dot: "rgba(180, 84, 132, 0.56)",
+            link: "rgba(236, 72, 153, 0.14)",
+            pointer: "rgba(236, 72, 153, 0.46)",
+            ring: "rgba(244, 114, 182, 0.42)",
+            glow: "rgba(236, 72, 153, 0.16)"
         };
     }
 
