@@ -165,7 +165,7 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const pointer = { x: 0, y: 0, active: false };
+    const pointer = { x: 0, y: 0, active: false, lastMove: 0 };
     let width = 0;
     let height = 0;
     let particles = [];
@@ -194,7 +194,10 @@
             windY: mobile ? 0.003 : 0.005,
             damping: mobile ? 0.986 : 0.988,
             pointerRange: mobile ? 210 : 290,
-            pointerForce: mobile ? 0.065 : 0.095,
+            pointerForce: mobile ? 0.038 : 0.055,
+            pointerRepelRadius: mobile ? 58 : 82,
+            pointerRepelForce: mobile ? 0.18 : 0.28,
+            pointerSwirlForce: mobile ? 0.028 : 0.04,
             pointerLineDistance: mobile ? 190 : 260,
             linkDistance: mobile ? 128 : 168,
             explosionRadius: mobile ? 300 : 430,
@@ -237,6 +240,16 @@
 
         p.vx = (p.vx / speed) * max;
         p.vy = (p.vy / speed) * max;
+    }
+
+    function pointerIntensity(now) {
+        if (!pointer.active) return 0;
+
+        const age = now - pointer.lastMove;
+        if (age < 220) return 1;
+        if (age > 1600) return 0;
+
+        return 1 - (age - 220) / 1380;
     }
 
     function resize() {
@@ -285,6 +298,7 @@
     function updateParticles() {
         const options = motionSettings();
         const time = performance.now() * 0.001;
+        const pointerPower = pointerIntensity(performance.now());
 
         for (const p of particles) {
             const waveA = Math.sin(time * p.waveSpeed + p.phase + p.y * 0.006);
@@ -297,15 +311,22 @@
             p.vx += (Math.random() - 0.5) * p.wander;
             p.vy += (Math.random() - 0.5) * p.wander;
 
-            if (pointer.active) {
+            if (pointerPower > 0) {
                 const dx = pointer.x - p.x;
                 const dy = pointer.y - p.y;
                 const distance = Math.max(Math.hypot(dx, dy), 1);
 
                 if (distance < options.pointerRange) {
-                    const attraction = Math.pow(1 - distance / options.pointerRange, 1.8) * options.pointerForce;
-                    p.vx += (dx / distance) * attraction;
-                    p.vy += (dy / distance) * attraction;
+                    if (distance < options.pointerRepelRadius) {
+                        const repel = Math.pow(1 - distance / options.pointerRepelRadius, 1.35) * options.pointerRepelForce * pointerPower;
+                        p.vx -= (dx / distance) * repel;
+                        p.vy -= (dy / distance) * repel;
+                    } else {
+                        const attraction = Math.pow(1 - distance / options.pointerRange, 2.2) * options.pointerForce * pointerPower;
+                        const swirl = Math.pow(1 - distance / options.pointerRange, 1.2) * options.pointerSwirlForce * pointerPower;
+                        p.vx += (dx / distance) * attraction + (-dy / distance) * swirl;
+                        p.vy += (dy / distance) * attraction + (dx / distance) * swirl;
+                    }
                 }
             }
 
@@ -361,16 +382,17 @@
 
     function drawLinks(colors) {
         const options = motionSettings();
+        const pointerPower = pointerIntensity(performance.now());
 
         for (let i = 0; i < particles.length; i++) {
             const a = particles[i];
 
-            if (pointer.active) {
+            if (pointerPower > 0) {
                 const dx = a.x - pointer.x;
                 const dy = a.y - pointer.y;
                 const pointerDistance = Math.hypot(dx, dy);
                 if (pointerDistance < options.pointerLineDistance) {
-                    ctx.globalAlpha = Math.pow(1 - pointerDistance / options.pointerLineDistance, 1.25) * (options.mobile ? 0.78 : 0.96);
+                    ctx.globalAlpha = Math.pow(1 - pointerDistance / options.pointerLineDistance, 1.25) * (options.mobile ? 0.78 : 0.96) * pointerPower;
                     ctx.strokeStyle = colors.pointer;
                     ctx.lineWidth = options.mobile ? 0.95 : 1.12;
                     ctx.beginPath();
@@ -452,11 +474,13 @@
         pointer.x = event.clientX;
         pointer.y = event.clientY;
         pointer.active = true;
+        pointer.lastMove = performance.now();
     }, { passive: true });
     window.addEventListener("pointerdown", (event) => {
         pointer.x = event.clientX;
         pointer.y = event.clientY;
         pointer.active = true;
+        pointer.lastMove = performance.now();
         explode(event.clientX, event.clientY);
     }, { passive: true });
     window.addEventListener("pointerleave", () => {
