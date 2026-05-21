@@ -186,16 +186,20 @@
             minCount: mobile ? 120 : 260,
             maxCount: mobile ? 220 : 520,
             density: mobile ? 2800 : 3600,
-            baseSpeed: mobile ? 0.48 : 0.68,
-            wanderMin: mobile ? 0.004 : 0.005,
-            wanderMax: mobile ? 0.011 : 0.016,
+            baseSpeed: mobile ? 0.72 : 0.95,
+            wanderMin: mobile ? 0.006 : 0.008,
+            wanderMax: mobile ? 0.018 : 0.026,
+            flowForce: mobile ? 0.018 : 0.026,
+            windX: mobile ? 0.018 : 0.024,
+            windY: mobile ? 0.006 : 0.011,
+            damping: mobile ? 0.992 : 0.994,
             pointerRange: mobile ? 210 : 290,
             pointerForce: mobile ? 0.065 : 0.095,
             pointerLineDistance: mobile ? 190 : 260,
             linkDistance: mobile ? 128 : 168,
             explosionRadius: mobile ? 300 : 430,
             explosionForce: mobile ? 7.2 : 11.8,
-            maxSpeed: mobile ? 3.1 : 4.4,
+            maxSpeed: mobile ? 3.8 : 5.2,
             minCollisionDistance: mobile ? 11 : 13,
             collisionPush: mobile ? 0.26 : 0.38,
             rippleStep: mobile ? 7 : 10,
@@ -253,7 +257,11 @@
             vx: (Math.random() - 0.5) * options.baseSpeed,
             vy: (Math.random() - 0.5) * options.baseSpeed,
             r: 1.05 + Math.random() * (options.mobile ? 1.35 : 1.8),
-            wander: options.wanderMin + Math.random() * (options.wanderMax - options.wanderMin)
+            wander: options.wanderMin + Math.random() * (options.wanderMax - options.wanderMin),
+            phase: Math.random() * Math.PI * 2,
+            waveSpeed: 0.55 + Math.random() * 1.15,
+            flowAngle: Math.random() * Math.PI * 2,
+            flowStrength: options.flowForce * (0.55 + Math.random() * 1.45)
         }));
     }
 
@@ -276,8 +284,16 @@
 
     function updateParticles() {
         const options = motionSettings();
+        const time = performance.now() * 0.001;
 
         for (const p of particles) {
+            const waveA = Math.sin(time * p.waveSpeed + p.phase + p.y * 0.006);
+            const waveB = Math.cos(time * p.waveSpeed * 0.74 + p.phase + p.x * 0.004);
+            const flowAngle = p.flowAngle + waveA * 0.85 + waveB * 0.45;
+
+            p.flowAngle += Math.sin(time * 0.42 + p.phase) * 0.0025;
+            p.vx += Math.cos(flowAngle) * p.flowStrength + options.windX + waveB * options.flowForce * 0.42;
+            p.vy += Math.sin(flowAngle) * p.flowStrength + options.windY + waveA * options.flowForce * 0.42;
             p.vx += (Math.random() - 0.5) * p.wander;
             p.vy += (Math.random() - 0.5) * p.wander;
 
@@ -295,21 +311,17 @@
 
             p.x += p.vx;
             p.y += p.vy;
-            p.vx *= 0.985 - collisionHeat * 0.02;
-            p.vy *= 0.985 - collisionHeat * 0.02;
+            p.vx *= options.damping - collisionHeat * 0.018;
+            p.vy *= options.damping - collisionHeat * 0.018;
 
-            if (Math.abs(p.vx) < 0.04) p.vx += (Math.random() - 0.5) * 0.03;
-            if (Math.abs(p.vy) < 0.04) p.vy += (Math.random() - 0.5) * 0.03;
+            if (Math.abs(p.vx) < 0.07) p.vx += (Math.random() - 0.5) * 0.08;
+            if (Math.abs(p.vy) < 0.07) p.vy += (Math.random() - 0.5) * 0.08;
             clampSpeed(p, options.maxSpeed);
 
-            if (p.x < 0 || p.x > width) {
-                p.vx *= -0.86;
-                p.x = Math.max(0, Math.min(width, p.x));
-            }
-            if (p.y < 0 || p.y > height) {
-                p.vy *= -0.86;
-                p.y = Math.max(0, Math.min(height, p.y));
-            }
+            if (p.x < -30) p.x = width + 30;
+            if (p.x > width + 30) p.x = -30;
+            if (p.y < -30) p.y = height + 30;
+            if (p.y > height + 30) p.y = -30;
         }
     }
 
