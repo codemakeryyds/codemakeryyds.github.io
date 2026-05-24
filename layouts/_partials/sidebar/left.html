@@ -55,7 +55,6 @@
         <li class="sidebar-panel sidebar-recent-panel">
             <div class="sidebar-panel__heading">
                 <span>{{ if $isZh }}最近更新{{ else }}Recent updates{{ end }}</span>
-                <a href="{{ relLangURL "index.xml" }}" aria-label="RSS">{{ partial "helper/icon" "rss" }}</a>
             </div>
             <ol class="sidebar-recent-list">
                 {{ range $recentPages }}
